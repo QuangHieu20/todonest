@@ -1,41 +1,75 @@
 <template>
   <div class="home-page">
     <!-- Header -->
-    <header class="bg-white shadow-sm border-b border-gray-100">
+    <header class="bg-white/95 backdrop-blur-sm border-b border-gray-200/50 sticky top-0 z-50">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="flex justify-between items-center h-16">
+        <div class="flex justify-between items-center h-16 sm:h-20">
           <!-- Logo -->
-          <div class="flex items-center">
+          <div class="flex items-center space-x-2 sm:space-x-3">
             <div class="flex-shrink-0">
-              <h1 class="text-2xl font-bold text-gray-900">TaskNest By HieuNQ</h1>
+              <!-- TaskNest Logo -->
+              <img 
+                src="~/assets/images/logos/logo.svg" 
+                alt="TaskNest Logo" 
+                class="w-8 h-8 sm:w-10 sm:h-10"
+              />
+            </div>
+            <div class="hidden sm:block">
+              <h1 class="text-lg sm:text-xl font-bold text-gray-900">TaskNest</h1>
+              <p class="text-xs text-gray-500 -mt-1">by HieuNQ</p>
+            </div>
+            <div class="sm:hidden">
+              <h1 class="text-lg font-bold text-gray-900">TaskNest</h1>
             </div>
           </div>
           
-          <!-- Navigation -->
-          <nav class="hidden md:flex space-x-8">
-            <a href="#" class="text-gray-900 hover:text-blue-600 px-3 py-2 text-sm font-medium transition-colors">Features</a>
-            <a href="#" class="text-gray-500 hover:text-blue-600 px-3 py-2 text-sm font-medium transition-colors">Pricing</a>
-            <a href="#" class="text-gray-500 hover:text-blue-600 px-3 py-2 text-sm font-medium transition-colors">About</a>
-            <a href="#" class="text-gray-500 hover:text-blue-600 px-3 py-2 text-sm font-medium transition-colors">Contact</a>
+          <!-- Desktop Navigation -->
+          <nav class="hidden lg:flex space-x-1">
+            <a href="#features" class="text-gray-600 hover:text-gray-900 px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200 hover:bg-gray-50">Features</a>
+            <a href="#pricing" class="text-gray-600 hover:text-gray-900 px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200 hover:bg-gray-50">Pricing</a>
+            <a href="#about" class="text-gray-600 hover:text-gray-900 px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200 hover:bg-gray-50">About</a>
+            <a href="#contact" class="text-gray-600 hover:text-gray-900 px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200 hover:bg-gray-50">Contact</a>
           </nav>
           
-          <!-- CTA Buttons -->
-          <div class="flex items-center space-x-4">
-            <button class="text-gray-500 hover:text-gray-900 px-3 py-2 text-sm font-medium transition-colors">
+          <!-- Desktop CTA Buttons -->
+          <div class="hidden md:flex items-center space-x-3">
+            <button class="text-gray-600 hover:text-gray-900 px-4 py-2 text-sm font-medium transition-colors duration-200">
               Sign In
             </button>
-            <button class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+            <button class="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-6 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5">
               Get Started
             </button>
           </div>
           
-          <!-- Mobile menu button -->
-          <div class="md:hidden">
-            <button class="text-gray-500 hover:text-gray-900">
-              <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <!-- Mobile CTA Button -->
+          <div class="md:hidden flex items-center space-x-2">
+            <button class="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200">
+              Get Started
+            </button>
+            <!-- Mobile menu button -->
+            <button @click="toggleMobileMenu" class="text-gray-600 hover:text-gray-900 p-2 rounded-lg hover:bg-gray-50 transition-colors duration-200">
+              <svg v-if="!isMobileMenuOpen" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
               </svg>
+              <svg v-else class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
             </button>
+          </div>
+        </div>
+        
+        <!-- Mobile Menu -->
+        <div v-show="isMobileMenuOpen" class="md:hidden border-t border-gray-200/50 bg-white/95 backdrop-blur-sm">
+          <div class="px-2 pt-2 pb-3 space-y-1">
+            <a href="#features" class="block px-3 py-2 text-base font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg transition-colors duration-200">Features</a>
+            <a href="#pricing" class="block px-3 py-2 text-base font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg transition-colors duration-200">Pricing</a>
+            <a href="#about" class="block px-3 py-2 text-base font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg transition-colors duration-200">About</a>
+            <a href="#contact" class="block px-3 py-2 text-base font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg transition-colors duration-200">Contact</a>
+            <div class="border-t border-gray-200/50 pt-3 mt-3">
+              <button class="block w-full text-left px-3 py-2 text-base font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg transition-colors duration-200">
+                Sign In
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -307,6 +341,24 @@
 </template>
 
 <script setup>
+// Mobile menu state
+const isMobileMenuOpen = ref(false)
+
+// Toggle mobile menu
+const toggleMobileMenu = () => {
+  isMobileMenuOpen.value = !isMobileMenuOpen.value
+}
+
+// Close mobile menu when clicking outside
+const closeMobileMenu = () => {
+  isMobileMenuOpen.value = false
+}
+
+// Close mobile menu on route change
+watch(() => useRoute().path, () => {
+  isMobileMenuOpen.value = false
+})
+
 // Page metadata
 useHead({
   title: 'TaskNest - Project Management Made Simple',

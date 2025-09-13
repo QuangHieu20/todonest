@@ -29,4 +29,8 @@ USER nestjs
 
 EXPOSE 4000
 
+# Health check để start nhanh hơn
+HEALTHCHECK --interval=5s --timeout=3s --start-period=10s --retries=3 \
+    CMD node -e "require('http').get('http://localhost:4000/', (res) => { process.exit(res.statusCode === 200 ? 0 : 1) })"
+
 CMD ["node", "dist/main.js"]
