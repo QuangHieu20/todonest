@@ -49,6 +49,27 @@ jobs:
           docker ps -a
           docker images
 
+      - name: Force Clean Docker
+        run: |
+          echo "🧹 Force cleaning all Docker resources..."
+          
+          # Stop all running containers
+          docker stop $(docker ps -aq) || true
+          
+          # Remove all containers
+          docker rm -f $(docker ps -aq) || true
+          
+          # Remove all networks
+          docker network prune -f || true
+          
+          # Remove unused images
+          docker image prune -f || true
+          
+          # Show final status
+          echo "📊 Docker status after cleanup:"
+          docker ps -a
+          docker images
+
       - name: Start Deploy
         run: |
           echo "📥 Code already checked out..."
@@ -57,10 +78,19 @@ jobs:
           echo "⏹️ Force stopping all containers..."
           docker-compose -f docker-compose.yml down --remove-orphans --volumes || true
           
-          # Kill any processes using ports 3000 and 4000
+          # Stop and remove any containers using our ports
+          echo "🔫 Stopping containers using ports 3000 and 4000..."
+          docker ps -q --filter "publish=3000" | xargs -r docker stop || true
+          docker ps -q --filter "publish=4000" | xargs -r docker stop || true
+          docker ps -q --filter "publish=3000" | xargs -r docker rm -f || true
+          docker ps -q --filter "publish=4000" | xargs -r docker rm -f || true
+          
+          # Kill any processes using ports 3000 and 4000 (alternative methods)
           echo "🔫 Killing processes on ports 3000 and 4000..."
-          lsof -ti:3000 | xargs -r kill -9 || true
-          lsof -ti:4000 | xargs -r kill -9 || true
+          netstat -tulpn | grep :3000 | awk '{print $7}' | cut -d/ -f1 | xargs -r kill -9 || true
+          netstat -tulpn | grep :4000 | awk '{print $7}' | cut -d/ -f1 | xargs -r kill -9 || true
+          fuser -k 3000/tcp || true
+          fuser -k 4000/tcp || true
           
           # Remove any dangling containers and networks
           echo "🧹 Cleaning up Docker resources..."
@@ -70,19 +100,25 @@ jobs:
           
           # Wait a bit for ports to be released
           echo "⏳ Waiting for ports to be released..."
-          sleep 5
+          sleep 10
           
-          # Check if ports are free
+          # Check if ports are free using netstat
           echo "🔍 Checking port availability..."
-          if lsof -i:3000; then
+          if netstat -tulpn | grep :3000; then
             echo "❌ Port 3000 is still in use"
+            netstat -tulpn | grep :3000
             exit 1
           fi
-          if lsof -i:4000; then
+          if netstat -tulpn | grep :4000; then
             echo "❌ Port 4000 is still in use"
+            netstat -tulpn | grep :4000
             exit 1
           fi
           echo "✅ Ports 3000 and 4000 are free"
+          
+          # Final port check before deploy
+          echo "🔍 Final port check..."
+          netstat -tulpn | grep -E ":(3000|4000)" || echo "✅ All ports are free"
           
           # Build and start with production environment
           echo "🚀 Building and starting containers..."
