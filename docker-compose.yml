@@ -1,0 +1,45 @@
+services:
+  backend:
+    build:
+      context: ./be
+      dockerfile: ../.docker/be/Dockerfile
+    container_name: todo_be
+    ports:
+      - "${BACKEND_PORT:-4000}:4000"
+    restart: always
+    environment:
+      NODE_ENV: ${NODE_ENV:-production}
+      DATABASE_URL: ${DATABASE_URL}
+    depends_on:
+      - db
+
+  frontend:
+    build:
+      context: ./fe
+      dockerfile: ../.docker/fe/Dockerfile
+    container_name: todo_fe
+    ports:
+      - "${FRONTEND_PORT:-3000}:3000"
+    environment:
+      NUXT_HOST: ${NUXT_HOST:-0.0.0.0}
+      NUXT_PORT: ${NUXT_PORT:-3000}
+      API_URL: ${API_URL:-http://backend:4000}
+    depends_on:
+      - backend
+    restart: always
+
+  db:
+    image: postgres:15
+    container_name: postgres-db
+    restart: always
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-todo_nest}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+
+volumes:
+  postgres_data:
