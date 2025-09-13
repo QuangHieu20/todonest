@@ -41,17 +41,48 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Check Docker Status
+        run: |
+          echo "🐳 Checking Docker status..."
+          docker --version
+          docker-compose --version
+          docker ps -a
+          docker images
+
       - name: Start Deploy
         run: |
           echo "📥 Code already checked out..."
           
-          # Stop existing containers
-          echo "⏹️ Stopping existing containers..."
-          docker-compose -f docker-compose.yml down || true
+          # Force stop and remove all containers
+          echo "⏹️ Force stopping all containers..."
+          docker-compose -f docker-compose.yml down --remove-orphans --volumes || true
           
-          # Remove old images to save space
-          echo "🧹 Cleaning old images..."
+          # Kill any processes using ports 3000 and 4000
+          echo "🔫 Killing processes on ports 3000 and 4000..."
+          lsof -ti:3000 | xargs -r kill -9 || true
+          lsof -ti:4000 | xargs -r kill -9 || true
+          
+          # Remove any dangling containers and networks
+          echo "🧹 Cleaning up Docker resources..."
+          docker container prune -f || true
+          docker network prune -f || true
           docker image prune -f || true
+          
+          # Wait a bit for ports to be released
+          echo "⏳ Waiting for ports to be released..."
+          sleep 5
+          
+          # Check if ports are free
+          echo "🔍 Checking port availability..."
+          if lsof -i:3000; then
+            echo "❌ Port 3000 is still in use"
+            exit 1
+          fi
+          if lsof -i:4000; then
+            echo "❌ Port 4000 is still in use"
+            exit 1
+          fi
+          echo "✅ Ports 3000 and 4000 are free"
           
           # Build and start with production environment
           echo "🚀 Building and starting containers..."

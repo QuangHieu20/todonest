@@ -1,22 +1,31 @@
-FROM ubuntu:20.04 as builder
-LABEL authors="nguyenquanghieu"
+# Multi-stage build cho backend
+FROM node:20-alpine AS builder
 
-# install + update library ubuntu
-RUN apt-get update && apt-get install -y curl \
-    && curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
-    && apt-get install -y nodejs \
-    && npm install -g yarn \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/* 
-    
-# Setup folder run resource in Docker
 WORKDIR /app
 
-COPY package*.json yarn.lock ./
-RUN yarn install --frozen-lockfile
+# Copy package files trước để cache dependencies
+COPY package.json yarn.lock ./
+RUN yarn install --frozen-lockfile --production=false
 
+# Copy source code và build
 COPY . .
 RUN yarn build
+
+# Production stage
+FROM node:20-alpine AS production
+
+WORKDIR /app
+
+# Copy package files và install chỉ production deps
+COPY package.json yarn.lock ./
+RUN yarn install --frozen-lockfile --production=true && yarn cache clean
+
+# Copy built app từ builder stage
+COPY --from=builder /app/dist ./dist
+
+# Tạo non-root user cho security
+RUN addgroup -g 1001 -S nodejs && adduser -S nestjs -u 1001
+USER nestjs
 
 EXPOSE 4000
 
