@@ -1,0 +1,66 @@
+name: "Deploy code to production"
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  # ============= Build ===============
+  build:
+    name: Build
+    runs-on: self-hosted
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Deploy Backend
+        run: |
+          cd be
+          docker build -f ../.docker/be/Dockerfile .
+
+      - name: Deploy FE
+        run: |
+          cd fe
+          docker build -f ../.docker/fe/Dockerfile .
+
+      - name: ✅ Build Test Completed
+        run: echo "Build test completed successfully!"
+
+  # ============= Deploy ===============
+  deploy:
+    name: Deploy to Production
+    runs-on: self-hosted
+    needs: build
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push' #run only merge code to branch main
+    environment: production
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Start Deploy
+        run: |
+          echo "📥 Code already checked out..."
+        
+          # Stop existing containers
+          echo "⏹️ Stopping existing containers..."
+          docker-compose -f docker-compose.prod.yml down || true
+          
+          # Remove old images to save space
+          echo "🧹 Cleaning old images..."
+          docker image prune -f || true
+          
+          # Build and start with production environment
+          echo "🚀 Building and starting containers..."
+          docker-compose -f docker-compose.prod.yml build --no-cache
+          docker-compose -f docker-compose.prod.yml up -d
+          
+          # Health check
+          echo "🏥 Performing health check..."
+          sleep 30
+          curl -f http://localhost:3000/health || { echo "Health check failed"; exit 1; }
+          
+          echo "✅ Deployment completed successfully!"
+          echo "🌐 Frontend: https://todonest.id.vn"
+          echo "🌐 Backend API: https://todonest.id.vn/api"
+          echo "🏥 Health Check: https://todonest.id.vn/health"
